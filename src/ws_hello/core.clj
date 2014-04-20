@@ -5,8 +5,14 @@
             [compojure.api.sweet :refer :all]
             [ws-hello.middleware :refer [wrap-log wrap-cache-control]]))
 
-(def readers (atom {}))
 (def writers (atom {}))
+(def readers
+  (-> (atom {})
+      (add-watch 0
+                 (fn [key obj old new]
+                   (future
+                     (doseq [[wrtr _] @writers]
+                       (send! wrtr (str (count @readers)))))))))
 
 
 (defn- add-ws-connection [store request]
@@ -24,9 +30,11 @@
   (let [{chan :body :as response} (add-ws-connection writers request)]
     (on-receive chan
                 (fn [message]
-                  (println message)
+                  (println "Received:" message)
                   (doseq [[rdr _] @readers]
                     (send! rdr message))))
+    (future
+      (send! chan (str (count @readers))))
     response))
 
 (defapi app
