@@ -8,5 +8,8 @@
                  [metosin/compojure-api "0.10.4"]
                  [javax.servlet/servlet-api "2.5"]]
   :main ^:skip-aot ws-hello.core
+  :min-lein-version "2.0.0"
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :uberjar-name "ws-hello-standalone.jar"
+  ;:profiles {:uberjar {:aot :all}}
+  )
