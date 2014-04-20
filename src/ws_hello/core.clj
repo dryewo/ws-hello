@@ -1,43 +1,40 @@
 (ns ws-hello.core
   (:gen-class)
-  (:require [org.httpkit.server]
+  (:require [org.httpkit.server :refer [with-channel on-close send! run-server]]
             [ring.util.http-response :refer :all]
-            [compojure.api.sweet :refer :all]))
+            [compojure.api.sweet :refer :all]
+            [ws-hello.middleware :refer [wrap-log wrap-cache-control]]))
 
-(defn add-reader [])
+(def readers (atom {}))
+(def writers (atom {}))
 
-(defn add-writer [])
 
-(defn wrap-cache-control [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (assoc-in response [:headers "Cache-control"] "no-cache"))))
+(defn- add-ws-connection [store request]
+  (with-channel request chan
+    (swap! store assoc chan true)
+    (println chan " connected")
+    (on-close chan (fn [status]
+                    (swap! store dissoc chan)
+                    (println chan " disconnected. status: " status)))))
 
-(defn wrap-log [handler]
-  (fn [request]
-    (let [req-id (apply str (take 4 (repeatedly #(rand-nth "ABCDEF0123456789"))))]
-      (println req-id
-                (->> (:request-method request) name clojure.string/upper-case)
-                (:uri request)
-                (:params request))
-      (let [response (handler request)]
-        (println req-id
-                  (:status response)
-                  (:body response))
-        response))))
+(defn add-reader-connection [request]
+  (add-ws-connection readers request))
+
+(defn add-writer-connection [request]
+  (add-ws-connection writers request))
 
 (defapi app
   (with-middleware [wrap-log wrap-cache-control]
     (GET* "/"      [] (resource-response "index.html" {:root "public"}))
-    (GET* "/read"  [] add-reader)
-    (GET* "/write" [] add-writer)
+    (GET* "/read"  [] add-reader-connection)
+    (GET* "/write" [] add-writer-connection)
     compojure.api.middleware/public-resource-routes
     (compojure.route/not-found "<h1>NO.</h1>")))
 
 (defn -main [& args]
   (let [port (or (first args) 4040)]
     (println "Starting on port" port)
-    (org.httpkit.server/run-server #'app {:port (bigdec port)})))
+    (run-server #'app {:port (bigdec port)})))
 
 ;(def stop-server (-main))
 ;(stop-server)

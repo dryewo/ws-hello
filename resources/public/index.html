@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hello WS</title>
+        <meta charset="utf-8">
+        <meta http-equiv="cache-control" content="no-cache" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" media="screen"
+            href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+
+        <script type="text/javascript"
+                src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script type="text/javascript"
+                src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript"
+                src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular.min.js"></script>
+
+        <script type="text/javascript">
+
+            var mainModule = angular.module('main', []);
+            var socket;
+
+            mainModule.controller('MainCtrl', ['$scope', '$http', function($scope, $http) {
+            }]);
+
+            var on_message = function(event) {
+                $scope.$apply(function() {
+                });
+            }
+
+            var open_socket = function() {
+                var REOPEN_TIMEOUT = 5000;
+                socket = new WebSocket("ws://" + window.location.host + "/read");
+                socket.onmessage = on_message;
+                socket.onclose = function(event) {
+                    console.log("Retrying in " + REOPEN_TIMEOUT + " ms");
+                    setTimeout(function() { open_socket(); }, REOPEN_TIMEOUT);
+                }
+            }
+
+            open_socket();
+
+        </script>
+        <style type="text/css">
+            .input-loading {
+                background: url('assets/loading.gif') no-repeat right 10px center;
+            }
+            .footer {
+                padding-top: 20px;
+                padding-bottom: 30px;
+                margin-top: 40px;
+                border-top: 1px solid #eee;
+                color: #888;
+                font-size: smaller;
+            }
+        </style>
+    </head>
+    <body ng-app="main">
+        <div class="container" ng-controller="MainCtrl">
+            <div class="row">
+                <div class="col-lg-12"><h1>Hello</h1></div>
+            </div>
+
+            <div class="footer">
+                <p>&copy; <a href="https://github.com/dryewo">Dmitry Balakhonskiy</a> 2014</p>
+            </div>
+        </div>
+
+    </body>
+</html>
