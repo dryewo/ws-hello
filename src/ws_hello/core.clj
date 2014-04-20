@@ -21,11 +21,11 @@
   (add-ws-connection readers request))
 
 (defn add-writer-connection [request]
-  (let [response (add-ws-connection writers request)]
-    (on-receive (:body response)
+  (let [{chan :body :as response} (add-ws-connection writers request)]
+    (on-receive chan
                 (fn [message]
                   (println message)
-                  (doseq [[_ rdr] @readers]
+                  (doseq [[rdr _] @readers]
                     (send! rdr message))))
     response))
 
