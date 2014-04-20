@@ -1,6 +1,6 @@
 (ns ws-hello.core
   (:gen-class)
-  (:require [org.httpkit.server :refer [with-channel on-close send! run-server]]
+  (:require [org.httpkit.server :refer [with-channel on-close on-receive send! run-server]]
             [ring.util.http-response :refer :all]
             [compojure.api.sweet :refer :all]
             [ws-hello.middleware :refer [wrap-log wrap-cache-control]]))
@@ -21,7 +21,13 @@
   (add-ws-connection readers request))
 
 (defn add-writer-connection [request]
-  (add-ws-connection writers request))
+  (let [response (add-ws-connection writers request)]
+    (on-receive (:body response)
+                (fn [message]
+                  (println message)
+                  (doseq [[_ rdr] @readers]
+                    (send! rdr message))))
+    response))
 
 (defapi app
   (with-middleware [wrap-log wrap-cache-control]
