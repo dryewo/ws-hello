@@ -19,31 +19,39 @@
 
         <script type="text/javascript">
 
+            function ReconnectingSocket (reconnectTimeoutMs, url, onMessage) {
+                var self = this;
+                var onOpen = function(event) {
+                    console.log("Connected " + event.currentTarget.url);
+                }
+                var onClose = function(event) {
+                    console.log("Closed " + event.currentTarget.url);
+                    setTimeout(function() { self.reconnect(); }, reconnectTimeoutMs);
+                }
+                self.reconnect = function() {
+                    console.log("Connecting " + url);
+                    self.socket = new WebSocket(url);
+                    self.socket.onopen = onOpen;
+                    self.socket.onmessage = onMessage;
+                    self.socket.onclose = onClose;
+                }
+                self.reconnect();
+            }
+
             var mainModule = angular.module('main', []);
-            var socket;
 
             mainModule.controller('MainCtrl', ['$scope', '$http', function($scope, $http) {
-                $scope.send = function() {
-                    socket.send("lalala");
+                var readerSocket = new ReconnectingSocket(2000, "ws://" + window.location.host + "/read", function(event) {
+                    console.log("Received: " + event.data);
+                    $scope.$apply(function() {
+                    });
+                });
+                var writerSocket = new ReconnectingSocket(2000, "ws://" + window.location.host + "/write", function(event) {});
+
+                $scope.send = function(message) {
+                    writerSocket.socket.send(message);
                 }
             }]);
-
-            var on_message = function(event) {
-                $scope.$apply(function() {
-                });
-            }
-
-            var open_socket = function() {
-                var REOPEN_TIMEOUT = 5000;
-                socket = new WebSocket("ws://" + window.location.host + "/write");
-                socket.onmessage = on_message;
-                socket.onclose = function(event) {
-                    console.log("Retrying in " + REOPEN_TIMEOUT + " ms");
-                    setTimeout(function() { open_socket(); }, REOPEN_TIMEOUT);
-                }
-            }
-
-            open_socket();
 
         </script>
         <style type="text/css">
@@ -67,7 +75,8 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <button type="button" class="btn btn-default" ng-click="send()">Send</button>
+                    <button type="button" class="btn btn-default" ng-click="send('lalala')">Send 1</button>
+                    <button type="button" class="btn btn-default" ng-click="send('foobar')">Send 2</button>
                 </div>
             </div>
 
