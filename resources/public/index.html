@@ -47,7 +47,7 @@
                     function(event) {
                         $scope.$apply(function() {
                             $scope.currentText.unshift(event.data);
-                            while ($scope.currentText.length > 10) {
+                            while ($scope.currentText.length > $scope.messageCount) {
                                 $scope.currentText.pop();
                             }
                         });
@@ -71,6 +71,7 @@
                         });
                     });
 
+                $scope.messageCount = 10;
                 $scope.readerCount = "";
                 $scope.currentText = [];
 
@@ -114,6 +115,11 @@
                     </p>
                     <p>Receiver: <span class="glyphicon"
                         ng-class="{'glyphicon-ok text-success': readerConnected, 'glyphicon-remove text-danger': !readerConnected}"/></p>
+                    <p><select class="form-control" style="width: 5em; display: inline" ng-model="messageCount">
+                        <option value="10">10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select> last messages</p>
                     <pre>{{currentText.join('\n')}}</pre>
                 </div>
             </div>
