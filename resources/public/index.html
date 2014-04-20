@@ -44,9 +44,15 @@
                 var readerSocket = new ReconnectingSocket(2000, "ws://" + window.location.host + "/read", function(event) {
                     console.log("Received: " + event.data);
                     $scope.$apply(function() {
+                        $scope.currentText.unshift(event.data);
+                        while ($scope.currentText.length > 10) {
+                            $scope.currentText.pop();
+                        }
                     });
                 });
                 var writerSocket = new ReconnectingSocket(2000, "ws://" + window.location.host + "/write", function(event) {});
+
+                $scope.currentText = [];
 
                 $scope.send = function(message) {
                     writerSocket.socket.send(message);
@@ -71,12 +77,15 @@
     <body ng-app="main">
         <div class="container" ng-controller="MainCtrl">
             <div class="row">
-                <div class="col-lg-12"><h1>Hello</h1></div>
+                <div class="col-lg-12 col-xs-12"><h1>Hello</h1></div>
             </div>
             <div class="row">
-                <div class="col-lg-12">
+                <div class="col-lg-12 col-xs-12">
+                    <p>
                     <button type="button" class="btn btn-default" ng-click="send('lalala')">Send 1</button>
                     <button type="button" class="btn btn-default" ng-click="send('foobar')">Send 2</button>
+                    </p>
+                    <p>{{currentText.join(' ')}}</p>
                 </div>
             </div>
 
